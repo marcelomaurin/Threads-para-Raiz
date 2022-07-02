@@ -14,7 +14,7 @@ https://www.includehelp.com/articles/threading-in-c-programming-language-with-gc
 
 #define MAXITEMS 10 /*Nro maximo de elementos*/
 
-int file[1000]; /*Elementos da fila*/
+int fila[10]; /*Elementos da fila*/
 
 
 /*thread function definition*/
@@ -23,9 +23,10 @@ void* threadRecepcao(void* args)
 	for(int cont = 0;cont<=MAXITEMS;cont++)
 	{	
 		
-		printf("Criando pacote nro %d",cont);	
-		sleep(1);		
+		printf("Criando pacote nro %d\n",cont);	
+		usleep(1000);		
 	}
+	printf("Recepcao terminou atendimento\n");
    
 }
 
@@ -54,6 +55,14 @@ pthread_t  Start_Executor()
 	return pid;
 }
 
+void StartVetor(){
+		for (int cont = 0;cont<=MAXITEMS;cont++)
+		{
+			fila[cont] = 0;
+			printf("Posicao %i zerada\n",cont);
+		}
+}
+
 
 void main(void){
 	
@@ -64,6 +73,8 @@ void main(void){
 	printf("\nBem vindo ao programa das threads\n");
 	printf("Este programa faz parte do artigo:\n");
 	printf("http://maurinsoft.com.br/index.php/2022/07/02/threads-para-raiz-parte-1/\n\n");
+	printf("Inicializando vetor\n\n");
+	StartVetor();
 	printf("Iniciando Recepcao\n");
 	pidRecepcao = Start_Recepcao();
 	printf("Iniciando Controlador\n");
@@ -71,7 +82,7 @@ void main(void){
 	printf("Iniciando Executor\n");
 	pidExecutor = Start_Executor();
 	bool flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
-	while(flag){
+	while(flag==true){
 		printf("Status:");
 		
 		sleep(1);

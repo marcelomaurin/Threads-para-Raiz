@@ -23,6 +23,4 @@ compile32:
 compile:
 	$(CC) $(SOURCE) $(LIBS) -o $(PROGRAMA)
 
-run:
-	$(PROGRAMA)
 
