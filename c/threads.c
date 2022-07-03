@@ -25,6 +25,7 @@ https://www.includehelp.com/articles/threading-in-c-programming-language-with-gc
 int fila[MAXITEMS]; /*Elementos da fila*/
 int       subthread_lwp;
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
+bool flgTerminou = false;
 
 #define UNIQUE_NAME "thread"
 
@@ -110,14 +111,55 @@ void* threadRecepcao(void* args)
 			fila[cont] = Valor; /*Grava Valor na fila*/
 			printf("Registrou na fila[%d] = %d\n",cont,Valor);
 			TerminaSessaoCritica();
-			usleep(1000);		
+			usleep(1000);		 
 		} else {
 				printf("Falha na Recepcao nro:\n",cont);
 		}
 			
 	}
 	printf("Recepcao terminou atendimento\n");
+	flgTerminou = true; /*Indica que terminou*/
    
+}
+
+/*thread function definition*/
+void* threadControlador(void* args)
+{
+  int oldValue, newValue;
+  int flgOrdenado = false;
+  printf("Iniciou o controlador\n");
+  while(!flgTerminou&&!flgOrdenado) /*Faz enquanto nao terminar e nao ordenao*/
+  {
+	usleep(2000);  
+	flgOrdenado = true;  
+	for(int cont = 0;cont<=MAXITEMS-2;cont++)
+	{
+		printf("Ordenando os pacote nro %d\n",cont);	
+		if(IniciaSessaoCritica()==0)
+		{
+			oldValue = fila[cont];
+			newValue = fila[cont+1];
+			if(oldValue>newValue) 
+			{ 
+		       fila[cont]= newValue;
+			   fila[cont+1]= oldValue;
+			   printf("Reordenou posicao %i\n", cont);
+			   flgOrdenado = false;  /*Diz que nao terminou de ordenar*/
+			}
+			TerminaSessaoCritica();
+		} else {
+				printf("Falha na Controlador nro:\n",cont);
+		}
+		
+	}	
+  }
+  printf("Terminou ordenação de todos os itens\n");
+  printf("\n\nFila ordenada:");
+  for(int cont = 0;cont<=MAXITEMS-1;cont++)
+  {
+	  printf("%i ",fila[cont]);
+  }
+  printf("\n\n");
 }
 
 pthread_t  Start_Recepcao()
@@ -133,6 +175,7 @@ pthread_t  Start_Controlador()
 {
 	pthread_t  pid	= 0;
 	int ret;
+	ret=pthread_create(&pid,NULL,&threadControlador,NULL);
 	
 	return pid;
 }
@@ -179,17 +222,24 @@ void main(void){
 		//rstatus = pthread_join (thread_idA, &thread_res);
 		if( !thread_exists(pidRecepcao) )
 		{
+			
 			pidRecepcao = 0; /*Zera thread*/
+		}else {
+			printf("Processo Recepcao ativa\n");
 		}
 		
 		if( !thread_exists(pidControlador) )
 		{
 			pidControlador = 0; /*Zera thread*/
+		}else {
+			printf("Processo Recepcao ativa\n");
 		}
 		
 		if( !thread_exists(pidExecutor) )
 		{
 			pidExecutor = 0; /*Zera thread*/
+		}else {
+			printf("Processo Recepcao ativa\n");
 		}		
 
 		if(rstatus != 0)
