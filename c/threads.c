@@ -5,6 +5,12 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <string.h>
+#include <syscall.h>
+#include <sys/prctl.h>
+#include <sys/file.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include<time.h>//necessário p/ função time()
 #include <stdlib.h>// necessário p/ as funções rand() e srand()
 
@@ -17,8 +23,46 @@ https://www.includehelp.com/articles/threading-in-c-programming-language-with-gc
 #define MAXITEMS 10 /*Nro maximo de elementos*/
 
 int fila[MAXITEMS]; /*Elementos da fila*/
+int       subthread_lwp;
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
 
+#define UNIQUE_NAME "thread"
+
+bool thread_exists (pthread_t thread_id)
+{
+    char path[100];
+    char thread_name[16];
+    FILE *fp;
+    bool  thread_exists = false;
+
+    // If the /proc/<pid>/task/<lwp>/comm file exists and it's contents match the "unique name" the
+    // thread exists, and it's the original thread (TID has NOT been reused).
+
+    sprintf(path, "/proc/%d/task/%d/comm", getpid(), subthread_lwp);
+
+    fp = fopen(path, "r");
+
+    if( fp != NULL ) {
+
+        fgets(thread_name, 16, fp);
+        fclose(fp);
+
+        // Need to trim off the newline
+        thread_name[strlen(thread_name)-1] = '\0';
+
+        if( strcmp(UNIQUE_NAME, thread_name) == 0 ) {
+            thread_exists = true;
+        }
+    }
+
+    if( thread_exists ) {
+        printf("thread exists\n");
+    } else {
+        printf("thread does NOT exist\n");
+    }
+
+    return thread_exists;
+}
 
 int IniciaSessaoCritica()
 {
@@ -133,6 +177,20 @@ void main(void){
 	while(flag==true){
 		printf("Status:");
 		//rstatus = pthread_join (thread_idA, &thread_res);
+		if( !thread_exists(pidRecepcao) )
+		{
+			pidRecepcao = 0; /*Zera thread*/
+		}
+		
+		if( !thread_exists(pidControlador) )
+		{
+			pidControlador = 0; /*Zera thread*/
+		}
+		
+		if( !thread_exists(pidExecutor) )
+		{
+			pidExecutor = 0; /*Zera thread*/
+		}		
 
 		if(rstatus != 0)
 		{
@@ -141,6 +199,7 @@ void main(void){
 			//exit(1);
 		}
 		
+		flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
 		sleep(1);
 	}
 	
