@@ -1,6 +1,6 @@
 
 PROGRAMA=threads
-PROGRAMA32=threads
+PROGRAMA32=threads32
 
 LIBS= -lpthread
 
