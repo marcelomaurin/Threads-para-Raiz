@@ -23,10 +23,12 @@ https://www.includehelp.com/articles/threading-in-c-programming-language-with-gc
 #define MAXITEMS 10 /*Nro maximo de elementos*/
 
 int fila[MAXITEMS]; /*Elementos da fila*/
+int executada[MAXITEMS]; /*Elementos da fila*/
 int       subthread_lwp;
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
 bool flgTerminou = false;
 bool flgTerminouRecepcao = false;
+bool flgTerminouExecucao = false;
 
 #define UNIQUE_NAME "thread"
 
@@ -72,7 +74,8 @@ int IniciaSessaoCritica()
 	int cont = 0;
 	while ( (rc = pthread_mutex_lock(&mutex))!=0)
 	{	
-		usleep(100); /*Aguarda um pouco*/
+		//usleep(10); /*Aguarda um pouco*/
+		for (int cont1=0;cont1<=1000;cont1++);
 		cont++;
 		printf("Sessao critica não conseguida\n");			
 		if (cont>3) break;
@@ -88,7 +91,7 @@ int TerminaSessaoCritica()
 	int cont = 0;
 	while ( (rc = pthread_mutex_unlock(&mutex))!=0)
 	{	
-		usleep(100); /*Aguarda um pouco*/
+		//usleep(100); /*Aguarda um pouco*/
 		cont++;
 		printf("Sessao critica não liberada\n");			
 		if (cont>3) break;
@@ -146,9 +149,9 @@ while((!flgordenado)&&(!flgTerminou))
 		}	else {
 			//printf("Posicao vazia %d\n",i);
 			flgordenado = false;
-		}			
+		}					
     }
-	//usleep(2000);
+	
     
   }
 }
@@ -166,9 +169,56 @@ void* threadControlador(void* args)
 		ordenacao();
 		
 		TerminaSessaoCritica();
+		//usleep(200);
 		
 	}
   }
+  	
+  printf("Terminou ordenação de todos os itens\n");
+}
+
+/*thread function definition*/
+void* threadExecutor(void* args)
+{
+  int oldValue, newValue;
+  bool flgExecutado = false;
+  printf("Iniciou o controlador\n");
+  int posicao = 0;
+  //while(!flgExecutado)
+  while((!flgExecutado)&&(!flgTerminou))
+  {
+    printf("Pesquisando Posicao %d\n",posicao);	
+	//if(IniciaSessaoCritica()==0)
+	printf("Entrou na sessao critica\n");  
+	if  (fila[posicao]==0) /*Fila nao foi preenchida*/
+	{
+		printf("posicao vazia %d\n",posicao);
+		posicao = posicao;
+		//break;
+	} else 
+	{
+	   executada[posicao] = fila[posicao];
+	   printf("Executou[%d] = %d\n",posicao,fila[posicao]);
+	   if(posicao==MAXITEMS-1)
+	   {
+		   printf("Chegou ao fim\n ");
+		   flgExecutado= true; /*Finaliza executor*/
+	   } else 
+	   {
+		   posicao ++;
+	   }
+		   
+	}
+		
+	//TerminaSessaoCritica();
+	//usleep(200);
+		
+	  
+
+	printf("terminou while\n");  
+  }
+  
+  flgTerminouExecucao = true;
   	
   printf("Terminou ordenação de todos os itens\n");
 
@@ -196,6 +246,7 @@ pthread_t  Start_Executor()
 {
 	pthread_t  pid	= 0;
 	int ret;
+	ret=pthread_create(&pid,NULL,&threadExecutor,NULL);
 	
 	return pid;
 }
@@ -204,7 +255,8 @@ void StartVetor(){
 		for (int cont = 0;cont<=MAXITEMS;cont++)
 		{
 			fila[cont] = 0;
-			printf("Posicao %i zerada\n",cont);
+			executada[cont]=0;
+			//printf("Posicao %i zerada\n",cont);
 		}
 }
 
@@ -228,31 +280,34 @@ void main(void){
 	pidControlador = Start_Controlador();
 	printf("Iniciando Executor\n");
 	pidExecutor = Start_Executor();
-	bool flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
-	while(flag==true){
+	//bool flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
+	flgTerminou = false;
+	while(!flgTerminou){
 		printf("Status:");
+		/*
 		//rstatus = pthread_join (thread_idA, &thread_res);
 		if( !thread_exists(pidRecepcao) )
 		{
 			
-			pidRecepcao = 0; /*Zera thread*/
+			pidRecepcao = 0; //Zera thread
 		}else {
 			printf("Processo Recepcao ativa\n");
 		}
 		
 		if( !thread_exists(pidControlador) )
 		{
-			pidControlador = 0; /*Zera thread*/
+			pidControlador = 0; //Zera thread
 		}else {
 			printf("Processo Recepcao ativa\n");
 		}
 		
 		if( !thread_exists(pidExecutor) )
 		{
-			pidExecutor = 0; /*Zera thread*/
+			pidExecutor = 0; //Zera thread
 		}else {
 			printf("Processo Recepcao ativa\n");
 		}		
+		*/
 
 		if(rstatus != 0)
 		{
@@ -261,14 +316,22 @@ void main(void){
 			//exit(1);
 		}
 		
-		flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
-		flgTerminou = (pidRecepcao!=0)||(pidControlador!=0);
+		//flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
+		//flgTerminou = (pidRecepcao!=0)||(pidControlador!=0);
+		flgTerminou = flgTerminouRecepcao && flgTerminouExecucao;
 		sleep(1);
 	}
 	printf("\n\nFila ordenada:");
 	for(int cont = 0;cont<=MAXITEMS-1;cont++)
 	{
 	  printf("%i ",fila[cont]);
+	}
+	printf("\n\n");
+	
+	printf("\n\nFila executada:");
+	for(int cont = 0;cont<=MAXITEMS-1;cont++)
+	{
+	  printf("%i ",executada[cont]);
 	}
 	printf("\n\n");
 	
