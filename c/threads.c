@@ -26,6 +26,7 @@ int fila[MAXITEMS]; /*Elementos da fila*/
 int       subthread_lwp;
 pthread_mutex_t    mutex = PTHREAD_MUTEX_INITIALIZER;
 bool flgTerminou = false;
+bool flgTerminouRecepcao = false;
 
 #define UNIQUE_NAME "thread"
 
@@ -101,25 +102,55 @@ int TerminaSessaoCritica()
 /*thread function definition*/
 void* threadRecepcao(void* args)
 {
-	for(int cont = 0;cont<=MAXITEMS;cont++)
+	for(int cont = 0;cont<=MAXITEMS-1;cont++)
 	{	
 		
-		printf("Criando pacote nro %d\n",cont);	
+		//printf("Criando pacote nro %d\n",cont);	
 		if(IniciaSessaoCritica()==0)
 		{
 			int Valor = (rand()% 100);
+			if (Valor == 0) Valor = (rand()% 100);
 			fila[cont] = Valor; /*Grava Valor na fila*/
 			printf("Registrou na fila[%d] = %d\n",cont,Valor);
 			TerminaSessaoCritica();
-			usleep(1000);		 
+			//usleep(1000);		 
 		} else {
 				printf("Falha na Recepcao nro:\n",cont);
 		}
 			
 	}
 	printf("Recepcao terminou atendimento\n");
-	flgTerminou = true; /*Indica que terminou*/
+	flgTerminouRecepcao = true; /*Indica que terminou*/
    
+}
+
+void ordenacao()
+{
+int i, x;
+bool flgordenado = false;
+while((!flgordenado)&&(!flgTerminou))
+{
+	//flgordenado = true;
+	for (i=0; i<=MAXITEMS-1; i++)
+	{
+		if ((fila[i]!=0)&&(fila[i+1]!=0))
+		{
+		  if(fila[i]>fila[i+1]) 
+		  {
+		    x = fila[i];		  
+            fila[i] = fila[i+1];
+		    fila[i+1] = x;
+		    flgordenado = false;
+		    //printf("Ordenando os pacote nro %d\n",i);
+		  }
+		}	else {
+			//printf("Posicao vazia %d\n",i);
+			flgordenado = false;
+		}			
+    }
+	//usleep(2000);
+    
+  }
 }
 
 /*thread function definition*/
@@ -128,38 +159,19 @@ void* threadControlador(void* args)
   int oldValue, newValue;
   int flgOrdenado = false;
   printf("Iniciou o controlador\n");
-  while(!flgTerminou&&!flgOrdenado) /*Faz enquanto nao terminar e nao ordenao*/
-  {
-	usleep(2000);  
-	flgOrdenado = true;  
-	for(int cont = 0;cont<=MAXITEMS-2;cont++)
+  while(!flgTerminou) /*Faz enquanto nao terminar e nao ordenao*/
+  { 
+	if(IniciaSessaoCritica()==0)
 	{
-		printf("Ordenando os pacote nro %d\n",cont);	
-		if(IniciaSessaoCritica()==0)
-		{
-			oldValue = fila[cont];
-			newValue = fila[cont+1];
-			if(oldValue>newValue) 
-			{ 
-		       fila[cont]= newValue;
-			   fila[cont+1]= oldValue;
-			   printf("Reordenou posicao %i\n", cont);
-			   flgOrdenado = false;  /*Diz que nao terminou de ordenar*/
-			}
-			TerminaSessaoCritica();
-		} else {
-				printf("Falha na Controlador nro:\n",cont);
-		}
+		ordenacao();
 		
-	}	
+		TerminaSessaoCritica();
+		
+	}
   }
+  	
   printf("Terminou ordenação de todos os itens\n");
-  printf("\n\nFila ordenada:");
-  for(int cont = 0;cont<=MAXITEMS-1;cont++)
-  {
-	  printf("%i ",fila[cont]);
-  }
-  printf("\n\n");
+
 }
 
 pthread_t  Start_Recepcao()
@@ -250,8 +262,15 @@ void main(void){
 		}
 		
 		flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
+		flgTerminou = (pidRecepcao!=0)||(pidControlador!=0);
 		sleep(1);
 	}
+	printf("\n\nFila ordenada:");
+	for(int cont = 0;cont<=MAXITEMS-1;cont++)
+	{
+	  printf("%i ",fila[cont]);
+	}
+	printf("\n\n");
 	
 }
 
