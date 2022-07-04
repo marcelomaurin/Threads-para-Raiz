@@ -193,7 +193,7 @@ void* threadExecutor(void* args)
 	if  (fila[posicao]==0) /*Fila nao foi preenchida*/
 	{
 		printf("posicao vazia %d\n",posicao);
-		posicao = posicao;
+		//posicao = posicao;
 	
 	} else 
 	{
@@ -246,7 +246,7 @@ pthread_t  Start_Executor()
 }
 
 void StartVetor(){
-		for (int cont = 0;cont<=MAXITEMS;cont++)
+		for (int cont = 0;cont<=MAXITEMS-1;cont++)
 		{
 			fila[cont] = 0;
 			executada[cont]=0;
