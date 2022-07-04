@@ -187,14 +187,14 @@ void* threadExecutor(void* args)
   //while(!flgExecutado)
   while((!flgExecutado)&&(!flgTerminou))
   {
-    printf("Pesquisando Posicao %d\n",posicao);	
-	//if(IniciaSessaoCritica()==0)
-	printf("Entrou na sessao critica\n");  
+    //printf("Pesquisando Posicao %d\n",posicao);	
+
+	//printf("Entrou na sessao critica\n");  
 	if  (fila[posicao]==0) /*Fila nao foi preenchida*/
 	{
 		printf("posicao vazia %d\n",posicao);
 		posicao = posicao;
-		//break;
+	
 	} else 
 	{
 	   executada[posicao] = fila[posicao];
@@ -209,13 +209,7 @@ void* threadExecutor(void* args)
 	   }
 		   
 	}
-		
-	//TerminaSessaoCritica();
-	//usleep(200);
-		
-	  
-
-	printf("terminou while\n");  
+	//printf("terminou while\n");  
   }
   
   flgTerminouExecucao = true;
@@ -284,40 +278,13 @@ void main(void){
 	flgTerminou = false;
 	while(!flgTerminou){
 		printf("Status:");
-		/*
-		//rstatus = pthread_join (thread_idA, &thread_res);
-		if( !thread_exists(pidRecepcao) )
-		{
-			
-			pidRecepcao = 0; //Zera thread
-		}else {
-			printf("Processo Recepcao ativa\n");
-		}
-		
-		if( !thread_exists(pidControlador) )
-		{
-			pidControlador = 0; //Zera thread
-		}else {
-			printf("Processo Recepcao ativa\n");
-		}
-		
-		if( !thread_exists(pidExecutor) )
-		{
-			pidExecutor = 0; //Zera thread
-		}else {
-			printf("Processo Recepcao ativa\n");
-		}		
-		*/
 
 		if(rstatus != 0)
 		{
 			printf ("Erro ao aguardar finalização do thread A.\n");
-			//exit(EXIT_FAILURE);
-			//exit(1);
+
 		}
-		
-		//flag = ((pidRecepcao!=0)||(pidControlador!=0)||(pidExecutor!=0));
-		//flgTerminou = (pidRecepcao!=0)||(pidControlador!=0);
+
 		flgTerminou = flgTerminouRecepcao && flgTerminouExecucao;
 		sleep(1);
 	}
